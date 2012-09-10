@@ -1,0 +1,180 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include "binaryHeap.h"
+
+heap* initialize(int capacity)
+{
+	heap* Heap;
+	Heap = malloc(sizeof(heap));
+	if(!Heap) {
+		perror("Heap could not be allocated!\n");
+		exit(0);
+	}
+	Heap->size = 0;
+	Heap->capacity = capacity;
+	Heap->offset = 0;
+	Heap->nodes = malloc((capacity+1)*sizeof(node));
+	Heap->nodes[0].key = -INT_MAX/2;
+	return Heap;
+}
+	
+heap* decreaseAllKeys(heap* Heap, int delta)
+{
+	if(abs(delta) < INT_MAX/2) {
+		Heap->offset -= delta;
+	}
+	printf("Decreased all keys by %i\n", delta);
+	return Heap;
+}
+
+heap* insert(heap* Heap, int key)
+{
+	if((Heap->size)+1 <= Heap->capacity) {
+		Heap->nodes[Heap->size+1].key = key - Heap->offset;
+		Heap->size++;
+		printf("The key %i was inserted.\n", key);
+	} else {
+		printf("The heap is already full and the new node couldn't be inserted!\n");
+	}
+	return upHeap(Heap, Heap->size);
+}
+	
+heap* upHeap(heap* Heap, int pos)
+{
+	int i = pos;
+	while(Heap->nodes[i].key < Heap->nodes[i/2].key && i != 0) {
+		node* tempNode;
+		tempNode = malloc(sizeof(node));
+		if(!tempNode) {
+			perror("upHeap tempNode couldn't be allocated!\n");
+			exit(0);
+		}
+		tempNode->key = Heap->nodes[i/2].key;
+		Heap->nodes[i/2].key = Heap->nodes[i].key;
+		Heap->nodes[i].key = tempNode->key;
+		if(tempNode) free(tempNode);
+		i /= 2;
+	}		
+	return Heap;
+}
+
+heap* deleteKey(heap* Heap, int key)
+{
+	key -= Heap->offset;
+	int pos = 0;
+	pos = find(Heap, key, 1);
+	if(pos) {
+		Heap->nodes[pos].key = Heap->nodes[Heap->size].key;
+		Heap->size--;
+		printf("Key %i got deleted and %i was put there.\n", key+Heap->offset, Heap->nodes[pos].key+Heap->offset);
+		printHeap(Heap);
+		if (Heap->nodes[pos].key < Heap->nodes[pos/2].key) {
+			Heap = upHeap(Heap, pos);
+		} else if ((pos*2 <= Heap->size && Heap->nodes[pos].key > Heap->nodes[pos*2].key) || \
+			((pos*2)+1 <= Heap->size && Heap->nodes[pos].key > Heap->nodes[(pos*2)+1].key)) {
+			Heap = downHeap(Heap, pos);
+		}
+	} else {
+		printf("Key %i could not be found for deletion.\n", key+Heap->offset);
+	}
+	return Heap;	
+}
+
+heap* delete(heap* Heap)
+{
+	int key = Heap->nodes[1].key;
+//	key -= Heap->offset;
+	int pos = 1;
+	if(pos) {
+		Heap->nodes[pos].key = Heap->nodes[Heap->size].key;
+		Heap->size--;
+		printf("Key %i got deleted and %i was put there.\n", key+Heap->offset, Heap->nodes[pos].key+Heap->offset);
+		printHeap(Heap);
+		if (Heap->nodes[pos].key < Heap->nodes[pos/2].key) {
+			Heap = upHeap(Heap, pos);
+		} else if ((pos*2 <= Heap->size && Heap->nodes[pos].key > Heap->nodes[pos*2].key) || \
+			((pos*2)+1 <= Heap->size && Heap->nodes[pos].key > Heap->nodes[(pos*2)+1].key)) {
+			Heap = downHeap(Heap, pos);
+		}
+	} else {
+		printf("Key %i could not be found for deletion.\n", key+Heap->offset);
+	}
+	return Heap;	
+}
+
+heap* downHeap(heap* Heap, int pos)
+{
+	if ((pos*2) <= Heap->size) {
+		if((pos*2)+1 <= Heap->size && Heap->nodes[(pos*2)+1].key < Heap->nodes[pos*2].key \
+		&& Heap->nodes[pos].key > Heap->nodes[(pos*2)+1].key) {
+			node* tempNode = malloc(sizeof(node));
+			if(!tempNode) {
+				perror("downHeap tempNode could not be allocated!\n");
+				exit(0);
+			}
+			tempNode->key = Heap->nodes[pos].key;
+			Heap->nodes[pos].key = Heap->nodes[(pos*2)+1].key;
+			Heap->nodes[(pos*2)+1].key = tempNode->key;
+			if(tempNode) free(tempNode);
+			downHeap(Heap, (pos*2)+1);
+		} else if(Heap->nodes[pos*2].key < Heap->nodes[pos].key) {
+			node* tempNode = malloc(sizeof(node));
+			if(!tempNode) {
+				perror("downHeap tempNode could not be allocated!\n");
+				exit(0);
+			}
+			tempNode->key = Heap->nodes[pos].key;
+			Heap->nodes[pos].key = Heap->nodes[(pos*2)].key;
+			Heap->nodes[(pos*2)].key = tempNode->key;
+			if(tempNode) free(tempNode);
+			downHeap(Heap, (pos*2));
+		}
+		
+	}
+	return Heap;
+}
+		
+
+int find(heap *Heap, int key, int pos)
+{
+	if(pos <= Heap->size && Heap->nodes[pos].key == key) {
+		return pos;
+	} else {
+		if(pos*2 <= Heap->size) {
+			int newpos = find(Heap, key, pos*2);
+			if(newpos) {
+				return newpos;
+			} else {
+				newpos = find(Heap, key, (pos*2)+1);
+				return newpos;
+			}
+		}
+		return 0;
+	}
+}
+
+void printHeap(heap* Heap)
+{
+	if(Heap->size == 0) {
+		printf("%i\n", Heap->nodes[0].key);
+	}
+	printf("...Printing heap...\n");
+	int i = 0, j = 1;
+	i++;
+	while (i <= Heap->size) {
+		while (i <= j && i <= Heap->size) {
+			printf("%i ", Heap->nodes[i].key + Heap->offset);
+			i++;
+		}
+		j = (j*2)+1;
+		printf("\n");
+	}
+	printf("...Stopped printing heap...\n");		
+}
+
+void destroy(heap* Heap)
+{
+	if (Heap->nodes) free(Heap->nodes);
+	if (Heap) free(Heap);
+}

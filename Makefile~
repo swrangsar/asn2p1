@@ -1,0 +1,8 @@
+CFLAGS=-Wall -g -DNDEBUG
+
+all: binaryHeapTest
+
+asn2p1: binaryHeap.o
+
+clean:
+	rm -f binaryHeap.o binaryHeapTest

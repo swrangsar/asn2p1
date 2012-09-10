@@ -1,0 +1,25 @@
+#ifndef _binaryHeap_h
+#define _binaryHeap_h
+
+typedef struct {
+	int key;
+} node;	
+
+typedef struct {
+	int size;
+	int capacity;
+	int offset;
+	node *nodes;
+} heap;
+
+heap* decreaseAllKeys(heap* Heap, int delta);
+heap* initialize(int maxSize);
+heap* insert(heap* Heap, int key);
+heap* upHeap(heap* Heap, int pos);
+heap* deleteKey(heap* Heap, int key);
+heap* downHeap(heap* Heap, int pos);
+int find(heap *Heap, int key, int pos);
+void printHeap(heap* Heap);
+void destroy(heap* Heap);
+
+#endif
